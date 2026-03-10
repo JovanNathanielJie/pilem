@@ -1,13 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:pilem/models/movie.dart';
-import 'package:pilem/screens/detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'detail_screen.dart';
 
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
-
   @override
   FavoriteScreenState createState() => FavoriteScreenState();
 }
@@ -18,64 +16,88 @@ class FavoriteScreenState extends State<FavoriteScreen> {
   @override
   void initState() {
     super.initState();
-    _loadFavoriteMovies();
+    _loadFavorites();
   }
 
-  Future<void> _loadFavoriteMovies() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String> favoriteMovieIds =
-        prefs.getKeys().where((key) => key.startsWith('movie_')).toList();
-    print('favoriteMovieIds: $favoriteMovieIds');
+  Future<void> _loadFavorites() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    final List<String> favoritesJson = prefs.getStringList('favorites') ?? [];
+
     setState(() {
-      _favoriteMovies = favoriteMovieIds
-          .map((id) {
-            final String? movieJson = prefs.getString(id);
-            if (movieJson != null && movieJson.isNotEmpty) {
-              final Map<String, dynamic> movieData =
-jsonDecode(movieJson);
-              return Movie.fromJson(movieData);
-            }
-            return null;
-          })
-          .where((movie) => movie != null)
-          .cast<Movie>()
+      _favoriteMovies = favoritesJson
+          .map((jsonStr) => Movie.fromJson(json.decode(jsonStr)))
           .toList();
     });
+  }
+
+  Future<void> _removeFavorite(int movieId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> favoritesJson = prefs.getStringList('favorites') ?? [];
+    favoritesJson.removeWhere((jsonStr) {
+      final Map<String, dynamic> movieMap = json.decode(jsonStr);
+      return movieMap['id'] == movieId;
+    });
+    await prefs.setStringList('favorites', favoritesJson);
+    _loadFavorites();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favorite Movies'),
-      ),
-      body: ListView.builder(
-        itemCount: _favoriteMovies.length,
-        itemBuilder: (context, index) {
-          final Movie movie = _favoriteMovies[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: ListTile(
-              leading: Image.network(
-                'https://image.tmdb.org/t/p/w500${movie.posterPath}',
-                height: 50,
-                width: 50,
-                fit: BoxFit.cover,
-              ),
-              title: Text(movie.title),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => DetailScreen(movie: movie),
+      appBar: AppBar(title: const Text('Film Favorit')),
+      body: _favoriteMovies.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_border, size: 80, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Belum ada film favorit',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-
+                ],
+              ),
+            )
+          
+          : ListView.builder(
+              itemCount: _favoriteMovies.length,
+              itemBuilder: (context, index) {
+                final Movie movie = _favoriteMovies[index];
+                return ListTile(
+                  
+                  leading: movie.posterPath.isNotEmpty
+                      ? Image.network(
+                          'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                          width: 50,
+                          fit: BoxFit.cover,
+                        )
+                      : const SizedBox(
+                          width: 50,
+                          child: Icon(Icons.movie),
+                        ),
+                  
+                  title: Text(movie.title),
+                  
+                  subtitle: Text(
+                    '${movie.releaseDate} ⭐ ${movie.voteAverage}',
+                  ),
+                  
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _removeFavorite(movie.id),
+                  ),
+                  
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailScreen(movie: movie),
+                    ),
+                  ),
                 );
               },
             ),
-          );
-        },
-      ),
     );
   }
 }
