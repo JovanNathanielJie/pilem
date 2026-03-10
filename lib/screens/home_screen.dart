@@ -12,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
-
+  
   List<Movie> _allMovies = [];
   List<Movie> _trendingMovies = [];
   List<Movie> _popularMovies = [];
@@ -24,14 +24,9 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadMovies() async {
-    final List<Map<String, dynamic>> allMoviesData =
-        await _apiService.getAllMovies();
-
-    final List<Map<String, dynamic>> trendingMoviesData =
-        await _apiService.getTrendingMovies();
-
-    final List<Map<String, dynamic>> popularMoviesData =
-        await _apiService.getPopularMovies();
+    final List<Map<String, dynamic>> allMoviesData = await _apiService.getAllMovies();
+    final List<Map<String, dynamic>> trendingMoviesData = await _apiService.getTrendingMovies();
+    final List<Map<String, dynamic>> popularMoviesData = await _apiService.getPopularMovies();
 
     setState(() {
       _allMovies = allMoviesData.map((e) => Movie.fromJson(e)).toList();
@@ -68,8 +63,9 @@ class HomeScreenState extends State<HomeScreen> {
           child: Text(
             title,
             style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold),
+              fontSize: 20, 
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         SizedBox(
@@ -78,10 +74,9 @@ class HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             itemCount: movies.length,
             itemBuilder: (BuildContext context, int index) {
-
               final Movie movie = movies[index];
-
               return GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -103,8 +98,7 @@ class HomeScreenState extends State<HomeScreen> {
                         movie.title.length > 14
                             ? '${movie.title.substring(0, 10)}...'
                             : movie.title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
