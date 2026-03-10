@@ -85,8 +85,16 @@ class FavoriteScreenState extends State<FavoriteScreen> {
                   ),
                   
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _removeFavorite(movie.id),
+                    icon: const Icon(Icons.favorite, color: Colors.red),
+                    onPressed: () {
+                      _removeFavorite(movie.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${movie.title} dihapus dari favorit'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
                   ),
                   
                   onTap: () => Navigator.push(
@@ -94,7 +102,7 @@ class FavoriteScreenState extends State<FavoriteScreen> {
                     MaterialPageRoute(
                       builder: (context) => DetailScreen(movie: movie),
                     ),
-                  ),
+                  ).then((_) => _loadFavorites()),
                 );
               },
             ),
