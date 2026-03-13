@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pilem/screens/home_screen.dart';
 import 'package:pilem/screens/search_screen.dart';
 import 'package:pilem/screens/favorite_screen.dart';
+import 'package:pilem/screens/watchlist_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -35,6 +36,7 @@ class MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const SearchScreen(),
+    const WatchlistScreen(),
     const FavoriteScreen(),
   ];
 
@@ -51,6 +53,12 @@ class MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey[400],
+        elevation: 12,
+        enableFeedback: true,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -59,6 +67,10 @@ class MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bookmark),
+            label: 'Watchlist',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.favorite),

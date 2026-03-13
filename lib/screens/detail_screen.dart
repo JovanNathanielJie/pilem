@@ -13,11 +13,13 @@ class DetailScreen extends StatefulWidget {
 
 class DetailScreenState extends State<DetailScreen> {
   bool _isFavorite = false;
+  bool _isInWatchlist = false;
 
   @override
   void initState() {
     super.initState();
     _checkFavoriteStatus();
+    _checkWatchlistStatus();
   }
 
   Future<void> _checkFavoriteStatus() async {
@@ -31,6 +33,20 @@ class DetailScreenState extends State<DetailScreen> {
 
     setState(() {
       _isFavorite = isFav;
+    });
+  }
+
+  Future<void> _checkWatchlistStatus() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> watchlistJson = prefs.getStringList('watchlist') ?? [];
+
+    final bool isInWatchlist = watchlistJson.any((jsonStr) {
+      final Map<String, dynamic> movieMap = json.decode(jsonStr);
+      return movieMap['id'] == widget.movie.id;
+    });
+
+    setState(() {
+      _isInWatchlist = isInWatchlist;
     });
   }
 
@@ -53,12 +69,38 @@ class DetailScreenState extends State<DetailScreen> {
     });
   }
 
+  Future<void> _toggleWatchlist() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final List<String> watchlistJson = prefs.getStringList('watchlist') ?? [];
+
+    if (_isInWatchlist) {
+      watchlistJson.removeWhere((jsonStr) {
+        final Map<String, dynamic> movieMap = json.decode(jsonStr);
+        return movieMap['id'] == widget.movie.id;
+      });
+    } else {
+      watchlistJson.add(json.encode(widget.movie.toJson()));
+    }
+    await prefs.setStringList('watchlist', watchlistJson);
+
+    setState(() {
+      _isInWatchlist = !_isInWatchlist;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.movie.title),
         actions: [
+          IconButton(
+            icon: Icon(
+              _isInWatchlist ? Icons.bookmark : Icons.bookmark_border,
+              color: _isInWatchlist ? Colors.blue : null,
+            ),
+            onPressed: _toggleWatchlist,
+          ),
           IconButton(
             icon: Icon(
               _isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -79,6 +121,37 @@ class DetailScreenState extends State<DetailScreen> {
                 height: 300,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 300,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 300,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text(
+                            'Gambar tidak tersedia',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 20),
               const Text(
